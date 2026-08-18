@@ -46,12 +46,11 @@ def _extract_place(result, query):
       [9][2], [9][3]  float  – latitude, longitude
       [11]            str    – place name
       [13][0]         str    – primary category
+      [37][1]         int    – review count
       [39]            str    – full address
       [78]            str    – ChIJ place ID
       [178][0][1][0][0] str  – local phone (e.g. "(716) 847-0070")
       [178][0][1][1][0] str  – international phone (e.g. "+1 716-847-0070")
-
-    NOTE: review count is not present in the tbm=map search response.
     """
     place_id = _safe_get(result, 78)
     if not place_id:
@@ -70,7 +69,7 @@ def _extract_place(result, query):
         'url': _safe_get(result, 7, 0, default=''),
         'coor': '',
         'stars': _safe_get(result, 4, 7, default=''),
-        'reviews': '',   # not available in tbm=map response
+        'reviews': _safe_get(result, 37, 1, default=''),
         'source_query': query,
     }
 
@@ -281,11 +280,24 @@ def save_to_csv(data, filename='data/output.csv'):
             if col not in record:
                 record[col] = ''
 
+    seen_ids: set = set()
+    deduped = []
+    for record in data:
+        rid = record.get('id', '')
+        if rid in seen_ids:
+            continue
+        seen_ids.add(rid)
+        deduped.append(record)
+
+    removed = len(data) - len(deduped)
+    if removed:
+        print(f'Removed {removed} duplicate(s) by id.')
+
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=column_order)
             writer.writeheader()
-            writer.writerows(data)
+            writer.writerows(deduped)
         print(f'Data saved to {filename}')
     except Exception as e:
         print(f'Error saving data to {filename}: {e}')
