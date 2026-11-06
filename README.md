@@ -1,420 +1,261 @@
-![Header](https://github.com/christivn/mapScraper/blob/main/github-header-image.png?raw=true)
+![mapScraper](github-header-image.png)
 
-# 🗺️🤖 mapScraper - Google Maps Scraper
+# mapScraper
 
-A Python tool for scraping Google Maps local services data **and** enriching the results with lead-scoring signals.
+## Purpose
 
-### Contributors
+mapScraper is a Python maps scraper and local business data extraction tool. It scrapes Google Maps search results to collect business names, categories, addresses, phone numbers, websites, coordinates, ratings, and review counts without requiring Google Maps API keys.
 
-<a href="https://github.com/christivn/mapScraper/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=christivn/mapScraper" />
-</a>
-
-## 🚀 Features
-
-| Script | Purpose |
-|--------|---------|
-| `mapScraperX.py` | Original scraper CLI — unchanged, backward-compatible |
-| `main.py` | New pipeline CLI with `scrape / enrich / full` modes |
-
-- **Place ID** - Unique identifier for the location
-- **Place URL** - Direct Google Maps link
-- **Place name** - Business or location name
-- **Category** - Type of business/service
-- **Full address** - Complete location address
-- **Phone number** - Contact phone number
-- **Associated domain and URL** - Business website information
-- **Average star rating** - Customer rating
-- **Number of reviews** - Total review count
-- **Customizable search parameters** - Language, country, result limit, and output filename
-
-## Features
-
-### Scraping (original)
-- Place ID, Maps URL, business name, category, full address
-- Phone (local + international format)
-- Website domain + URL
-- GPS coordinates
-- Average star rating + review count
-- Concurrent async processing, configurable language / country
-
-### Enrichment (new)
-- Feature engineering from existing CSV columns
-- Lightweight website scraping (contact page, service keywords, modern-stack detection)
-- Interpretable lead scoring (0–100) with segment labels
-- Works on any previously generated CSV — scraper never has to re-run
-
----
-
-2. **Install required packages:**
-   ```bash
-   pip install requests-html lxml[html_clean] urllib3 phonenumbers
-   ```
-
-- Python 3.10+
-- pip
-
-## Installation
-
-```bash
-git clone https://github.com/christivn/mapScraper.git
-cd mapScraper
-pip install -r requirements.txt
-```
-
-Dependencies: `aiohttp`, `tqdm`, `pandas`, `beautifulsoup4`
-
----
-
-## Usage — original scraper (mapScraperX.py)
-
-Everything here works exactly as before.
-
-```bash
-# Single query
-python mapScraperX.py "restaurants in Miami" --limit 50
-
-# Multiple queries from file
-python mapScraperX.py --queries-file query_example.txt
-
-# With concurrency and custom output
-python mapScraperX.py --queries-file query_example.txt \
-  --lang en --country us --limit 25 \
-  --output-file data/custom.csv --concurrent 5
-```
-
-### Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `query` | — | Single search query |
-| `--queries-file FILE` | — | File with one query per line |
-| `--lang CODE` | `en` | Language code |
-| `--country CODE` | `us` | Country code |
-| `--limit N` | no limit | Max results (total / per query) |
-| `--output-file PATH` | `data/output.csv` | Output CSV path |
-| `--concurrent N` | `3` | Max concurrent queries (3–5 recommended) |
-
----
-
-## Usage — pipeline (main.py)
-
-### Modes
-
-| Mode | What it does |
-|------|-------------|
-| `scrape` | Google Maps scraping only — identical output to `mapScraperX.py` |
-| `enrich` | Load an existing CSV → add features + lead scores → save enriched CSV |
-| `full` | Scrape first, then enrich the result |
-
-### Examples
-
-```bash
-# Scrape (same as mapScraperX.py)
-python main.py --mode scrape "marketing agencies in New York" --limit 50
-python main.py --mode scrape --queries-file query_example.txt
-
-# Enrich a previously generated CSV
-python main.py --mode enrich --input data/output.csv
-
-# Enrich without fetching websites (faster, offline-safe)
-python main.py --mode enrich --input data/output.csv --no-web-scraping
-
-The `--lang` flag maps to Google's `hl` parameter (interface language) and `--country` maps to `gl` (geolocation). Both are case-insensitive.
-
-### Language Codes (`--lang` / `hl`)
-
-| Code | Language | Code | Language | Code | Language |
-|------|----------|------|----------|------|----------|
-| `af` | Afrikaans | `ga` | Irish | `pa` | Punjabi |
-| `ak` | Akan | `gl` | Galician | `qu` | Quechua |
-| `sq` | Albanian | `ka` | Georgian | `ro` | Romanian |
-| `am` | Amharic | `de` | German | `rm` | Romansh |
-| `ar` | Arabic | `el` | Greek | `ru` | Russian |
-| `hy` | Armenian | `kl` | Greenlandic | `gd` | Scots Gaelic |
-| `az` | Azerbaijani | `gn` | Guarani | `sr` | Serbian |
-| `eu` | Basque | `gu` | Gujarati | `sh` | Serbo-Croatian |
-| `be` | Belarusian | `ht` | Haitian Creole | `st` | Sesotho |
-| `bem` | Bemba | `ha` | Hausa | `tn` | Setswana |
-| `bn` | Bengali | `haw` | Hawaiian | `sn` | Shona |
-| `bh` | Bihari | `he` | Hebrew | `sd` | Sindhi |
-| `bs` | Bosnian | `hi` | Hindi | `si` | Sinhalese |
-| `br` | Breton | `hu` | Hungarian | `sk` | Slovak |
-| `bg` | Bulgarian | `is` | Icelandic | `sl` | Slovenian |
-| `km` | Cambodian | `ig` | Igbo | `so` | Somali |
-| `ca` | Catalan | `id` | Indonesian | `es` | Spanish |
-| `chr` | Cherokee | `ia` | Interlingua | `es-419` | Spanish (Latin American) |
-| `ny` | Chichewa | `it` | Italian | `su` | Sundanese |
-| `zh-cn` | Chinese (Simplified) | `ja` | Japanese | `sw` | Swahili |
-| `zh-tw` | Chinese (Traditional) | `jw` | Javanese | `sv` | Swedish |
-| `co` | Corsican | `kn` | Kannada | `tg` | Tajik |
-| `hr` | Croatian | `kk` | Kazakh | `ta` | Tamil |
-| `cs` | Czech | `rw` | Kinyarwanda | `tt` | Tatar |
-| `da` | Danish | `rn` | Kirundi | `te` | Telugu |
-| `nl` | Dutch | `ko` | Korean | `th` | Thai |
-| `en` | English | `ku` | Kurdish | `ti` | Tigrinya |
-| `eo` | Esperanto | `ckb` | Kurdish (Sorani) | `to` | Tonga |
-| `et` | Estonian | `ky` | Kyrgyz | `tr` | Turkish |
-| `ee` | Ewe | `lo` | Laothian | `tk` | Turkmen |
-| `fo` | Faroese | `la` | Latin | `uk` | Ukrainian |
-| `tl` | Filipino | `lv` | Latvian | `ur` | Urdu |
-| `fi` | Finnish | `ln` | Lingala | `uz` | Uzbek |
-| `fr` | French | `lt` | Lithuanian | `vi` | Vietnamese |
-| `fy` | Frisian | `lg` | Luganda | `cy` | Welsh |
-| `gaa` | Ga | `mk` | Macedonian | `wo` | Wolof |
-| | | `mg` | Malagasy | `xh` | Xhosa |
-| | | `ms` | Malay | `yi` | Yiddish |
-| | | `ml` | Malayalam | `yo` | Yoruba |
-| | | `mt` | Maltese | `zu` | Zulu |
-| | | `mi` | Maori | | |
-| | | `mr` | Marathi | | |
-| | | `mn` | Mongolian | | |
-| | | `my` | Myanmar (Burmese) | | |
-| | | `ne` | Nepali | | |
-| | | `no` | Norwegian | | |
-| | | `nn` | Norwegian (Nynorsk) | | |
-| | | `oc` | Occitan | | |
-| | | `or` | Oriya | | |
-| | | `om` | Oromo | | |
-| | | `ps` | Pashto | | |
-| | | `fa` | Persian | | |
-| | | `pl` | Polish | | |
-| | | `pt` | Portuguese | | |
-| | | `pt-br` | Portuguese (Brazil) | | |
-| | | `pt-pt` | Portuguese (Portugal) | | |
-
-### Country Codes (`--country` / `gl`)
-
-| Code | Country | Code | Country | Code | Country |
-|------|---------|------|---------|------|---------|
-| `af` | Afghanistan | `ge` | Georgia | `ni` | Nicaragua |
-| `al` | Albania | `de` | Germany | `ne` | Niger |
-| `dz` | Algeria | `gh` | Ghana | `ng` | Nigeria |
-| `as` | American Samoa | `gi` | Gibraltar | `no` | Norway |
-| `ad` | Andorra | `gr` | Greece | `om` | Oman |
-| `ao` | Angola | `gl` | Greenland | `pk` | Pakistan |
-| `ai` | Anguilla | `gd` | Grenada | `pw` | Palau |
-| `ag` | Antigua and Barbuda | `gp` | Guadeloupe | `ps` | Palestinian Territory |
-| `ar` | Argentina | `gu` | Guam | `pa` | Panama |
-| `am` | Armenia | `gt` | Guatemala | `pg` | Papua New Guinea |
-| `aw` | Aruba | `gg` | Guernsey | `py` | Paraguay |
-| `au` | Australia | `gn` | Guinea | `pe` | Peru |
-| `at` | Austria | `gw` | Guinea-Bissau | `ph` | Philippines |
-| `az` | Azerbaijan | `gy` | Guyana | `pn` | Pitcairn |
-| `bs` | Bahamas | `ht` | Haiti | `pl` | Poland |
-| `bh` | Bahrain | `va` | Vatican City | `pt` | Portugal |
-| `bd` | Bangladesh | `hn` | Honduras | `pr` | Puerto Rico |
-| `bb` | Barbados | `hk` | Hong Kong | `qa` | Qatar |
-| `by` | Belarus | `hu` | Hungary | `re` | Reunion |
-| `be` | Belgium | `is` | Iceland | `ro` | Romania |
-| `bz` | Belize | `in` | India | `ru` | Russian Federation |
-| `bj` | Benin | `id` | Indonesia | `rw` | Rwanda |
-| `bm` | Bermuda | `ir` | Iran | `sh` | Saint Helena |
-| `bt` | Bhutan | `iq` | Iraq | `kn` | Saint Kitts and Nevis |
-| `bo` | Bolivia | `ie` | Ireland | `lc` | Saint Lucia |
-| `ba` | Bosnia and Herzegovina | `im` | Isle of Man | `pm` | Saint Pierre and Miquelon |
-| `bw` | Botswana | `il` | Israel | `vc` | Saint Vincent and the Grenadines |
-| `br` | Brazil | `it` | Italy | `ws` | Samoa |
-| `bn` | Brunei | `jm` | Jamaica | `sm` | San Marino |
-| `bg` | Bulgaria | `jp` | Japan | `st` | Sao Tome and Principe |
-| `bf` | Burkina Faso | `je` | Jersey | `sa` | Saudi Arabia |
-| `bi` | Burundi | `jo` | Jordan | `sn` | Senegal |
-| `kh` | Cambodia | `kz` | Kazakhstan | `rs` | Serbia |
-| `cm` | Cameroon | `ke` | Kenya | `sc` | Seychelles |
-| `ca` | Canada | `ki` | Kiribati | `sl` | Sierra Leone |
-| `cv` | Cape Verde | `kp` | North Korea | `sg` | Singapore |
-| `ky` | Cayman Islands | `kr` | South Korea | `sk` | Slovakia |
-| `cf` | Central African Republic | `kw` | Kuwait | `si` | Slovenia |
-| `td` | Chad | `kg` | Kyrgyzstan | `sb` | Solomon Islands |
-| `cl` | Chile | `la` | Laos | `so` | Somalia |
-| `cn` | China | `lv` | Latvia | `za` | South Africa |
-| `co` | Colombia | `lb` | Lebanon | `es` | Spain |
-| `km` | Comoros | `ls` | Lesotho | `lk` | Sri Lanka |
-| `cg` | Congo | `lr` | Liberia | `sd` | Sudan |
-| `cd` | Congo (DRC) | `ly` | Libya | `sr` | Suriname |
-| `ck` | Cook Islands | `li` | Liechtenstein | `sz` | Eswatini |
-| `cr` | Costa Rica | `lt` | Lithuania | `se` | Sweden |
-| `ci` | Cote D'Ivoire | `lu` | Luxembourg | `ch` | Switzerland |
-| `hr` | Croatia | `mo` | Macao | `sy` | Syria |
-| `cu` | Cuba | `mk` | North Macedonia | `tw` | Taiwan |
-| `cy` | Cyprus | `mg` | Madagascar | `tj` | Tajikistan |
-| `cz` | Czech Republic | `mw` | Malawi | `tz` | Tanzania |
-| `dk` | Denmark | `my` | Malaysia | `th` | Thailand |
-| `dj` | Djibouti | `mv` | Maldives | `tl` | Timor-Leste |
-| `dm` | Dominica | `ml` | Mali | `tg` | Togo |
-| `do` | Dominican Republic | `mt` | Malta | `tk` | Tokelau |
-| `ec` | Ecuador | `mh` | Marshall Islands | `to` | Tonga |
-| `eg` | Egypt | `mq` | Martinique | `tt` | Trinidad and Tobago |
-| `sv` | El Salvador | `mr` | Mauritania | `tn` | Tunisia |
-| `gq` | Equatorial Guinea | `mu` | Mauritius | `tr` | Turkey |
-| `er` | Eritrea | `yt` | Mayotte | `tm` | Turkmenistan |
-| `ee` | Estonia | `mx` | Mexico | `tc` | Turks and Caicos Islands |
-| `et` | Ethiopia | `fm` | Micronesia | `tv` | Tuvalu |
-| `fk` | Falkland Islands | `md` | Moldova | `ug` | Uganda |
-| `fo` | Faroe Islands | `mc` | Monaco | `ua` | Ukraine |
-| `fj` | Fiji | `mn` | Mongolia | `ae` | United Arab Emirates |
-| `fi` | Finland | `me` | Montenegro | `gb` | United Kingdom |
-| `fr` | France | `ms` | Montserrat | `us` | United States |
-| `gf` | French Guiana | `ma` | Morocco | `uy` | Uruguay |
-| `pf` | French Polynesia | `mz` | Mozambique | `uz` | Uzbekistan |
-| `ga` | Gabon | `mm` | Myanmar | `vu` | Vanuatu |
-| `gm` | Gambia | `na` | Namibia | `ve` | Venezuela |
-| | | `nr` | Nauru | `vn` | Vietnam |
-| | | `np` | Nepal | `vg` | Virgin Islands (British) |
-| | | `nl` | Netherlands | `vi` | Virgin Islands (U.S.) |
-| | | `nc` | New Caledonia | `wf` | Wallis and Futuna |
-| | | `nz` | New Zealand | `ye` | Yemen |
-| | | | | `zm` | Zambia |
-| | | | | `zw` | Zimbabwe |
-
----
-
-## Output format
-
-### Raw scrape CSV (unchanged)
-
-| Column | Description | Example |
-|--------|-------------|---------|
-| `id` | Google Place ID | `ChIJN1t_tDeuEmsRUsoyG83frY4` |
-| `url_place` | Google Maps link | `https://www.google.com/maps/place/?q=place_id:...` |
-| `title` | Business name | `Joe's Pizza` |
-| `category` | Business category | `Pizza restaurant` |
-| `address` | Full address | `123 Main St, New York, NY 10001` |
-| `phoneNumber` | Local phone | `(555) 123-4567` |
-| `completePhoneNumber` | International phone | `+1 555-123-4567` |
-| `domain` | Website domain | `joespizza.com` |
-| `url` | Full website URL | `https://www.joespizza.com` |
-| `coor` | Coordinates | `40.7128,-74.0060` |
-| `stars` | Average rating | `4.5` |
-| `reviews` | Review count | `234` |
-| `source_query` | Original query | `pizza in New York` |
-
-### Enriched CSV (all original columns plus)
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `has_phone` | bool | Phone number present |
-| `has_website` | bool | Website domain or URL present |
-| `domain_valid` | bool | Domain passes basic format validation |
-| `rating_score` | float | `stars × log(reviews+1)` — penalises high ratings with few reviews |
-| `review_density` | float | Normalised review count within the batch (0–1) |
-| `web_has_contact` | bool | Contact page / section detected on the website |
-| `web_has_services` | bool | Services / products section detected |
-| `web_keywords` | str | Top 10 content keywords (comma-separated) |
-| `web_is_modern` | bool | Modern JS framework detected (React, Vue, Next.js, …) |
-| `web_scraped` | bool | Whether the website was reachable and scraped |
-| `score` | float | Lead score 0–100 (see breakdown below) |
-| `segment` | str | `micro / small / medium / large` |
-
-### Score breakdown
-
-| Signal | Max pts | Thresholds |
-|--------|---------|------------|
-| Review count | 30 | ≥500→30, ≥200→24, ≥100→18, ≥50→12, ≥10→7, ≥1→3 |
-| Star rating | 25 | ≥4.5→25, ≥4.0→20, ≥3.5→15, ≥3.0→10, >0→5 |
-| Website presence | 30 | has_website+10, domain_valid+5, web_has_contact+5, web_has_services+5, web_is_modern+5 |
-| Phone | 15 | has_phone→15 |
-
-| Segment | Score range |
-|---------|-------------|
-| micro | 0–24 |
-| small | 25–49 |
-| medium | 50–74 |
-| large | 75–100 |
-
----
+The project provides two command-line interfaces:
+1. `mapScraperX.py`: A Google Places search crawler with an asynchronous CID fallback endpoint for retrieving missing phone numbers and addresses.
+2. `main.py`: A unified data pipeline supporting raw Google Maps scraping, website enrichment, and rule-based lead scoring (0 to 100).
 
 ## Architecture
 
+The project separates raw data scraping from data enrichment.
+
 ```
-mapScraper/
-├── mapScraperX.py          original scraper CLI (unchanged)
-├── main.py                 new pipeline CLI
-├── requirements.txt
+mapScraper-forked/
+├── main.py                  Pipeline CLI for scrape, enrich, and full modes
+├── mapScraperX.py           Search crawler CLI with fallback modes
+├── requirements.txt         Python package dependencies
 ├── mapScraper/
-│   └── placesCrawlerV2.py  async Google Maps scraper (deduplicates by id on save)
+│   ├── __init__.py          Package exports for places_crawler
+│   ├── places_crawler.py    Places tab scraper with async CID fallback
+│   └── placesCrawlerV2.py   Google Maps SPA scraper with tbm=map JSON parser
 ├── enrichment/
-│   ├── features.py         feature engineering from CSV columns
-│   ├── web_scraper.py      async website signal extraction
-│   └── scoring.py          lead scoring (0–100) + segmentation
+│   ├── __init__.py          Enrichment package marker
+│   ├── features.py          Feature engineering from scraped CSV data
+│   ├── web_scraper.py       Async website scraper for tech stack and contacts
+│   └── scoring.py           Rule-based lead scoring (0 to 100) and segmentation
 ├── pipeline/
-│   └── orchestrator.py     run_pipeline() — wires scrape & enrich
-└── data/
-    └── output.csv          scrape output (example)
+│   ├── __init__.py          Pipeline package marker
+│   └── orchestrator.py      Workflow coordinator connecting scraper and enrichment
+├── data/
+│   └── output.csv           Default output CSV path
+└── query_example.txt        Example search queries
 ```
 
-### Design principles
+### Scraping engines
 
-- Scraper and enrichment are **fully independent** — enrichment never imports scraper logic and vice versa.
-- Scraper output schema is **frozen** — the 13-column CSV is never modified.
-- Enriched output is a **superset** of the raw CSV — every original column is preserved.
-- Website scraping is **fault-tolerant** — any domain that fails returns empty signals without crashing the pipeline.
-- Enrichment accepts **any previously generated CSV** as input — no need to re-scrape.
-- Duplicates are removed by `id` at save time — first occurrence wins.
+The codebase includes two independent scraping implementations:
 
----
+1. `mapScraper/places_crawler.py` (called by `mapScraperX.py`):
+   - Sends requests to the Google Search Places tab (`https://www.google.com/search?q={query}&udm=1`).
+   - Parses business cards from HTML using `lxml`.
+   - Handles missing phone numbers through an asynchronous fallback to Google's CID detail endpoint (`https://www.google.com/async/lcl_akp?q={query}&async=ludocids:{cid},_fmt:prog`).
+   - Offers three operational modes: `fast`, `standard`, and `complete`.
 
-## Supported languages and countries
+2. `mapScraper/placesCrawlerV2.py` (called by `main.py`):
+   - Resolves the search session from `https://www.google.com/maps/search/{query}`.
+   - Extracts the internal `pb=` search path and paginates through `https://www.google.com/search?tbm=map...` in batches of 20 results.
+   - Parses the internal JSON array at `data[64]` after stripping Google's `)]}'` cross-site script inclusion prefix.
+   - Deduplicates results by unique place ID before saving.
 
-| Code | Language | Code | Country |
-|------|----------|------|---------|
-| `en` | English | `us` | United States |
-| `es` | Spanish | `es` | Spain |
-| `fr` | French | `fr` | France |
-| `de` | German | `de` | Germany |
-| `it` | Italian | `it` | Italy |
-| `pt` | Portuguese | `br` | Brazil |
-| `ja` | Japanese | `jp` | Japan |
-| `ko` | Korean | `kr` | South Korea |
-| `zh` | Chinese | `cn` | China |
+### Enrichment pipeline
 
----
+The enrichment pipeline in `enrichment/` processes any compatible CSV file:
+- `features.py`: Computes validation flags (`has_phone`, `has_website`, `domain_valid`), weighted ratings (`rating_score`), and relative review volume (`review_density`).
+- `web_scraper.py`: Fetches business homepages asynchronously using `aiohttp` to detect contact sections, services pages, modern JavaScript frameworks (React, Vue, Next.js, Nuxt, Angular, Gatsby, Svelte), and dominant keywords. Unreachable domains fail silently.
+- `scoring.py`: Computes a deterministic 0 to 100 lead score and assigns size segments (`micro`, `small`, `medium`, `large`).
 
-## What changed (April 2026 fix)
+## Setup
 
-Google shut down the `/localservices/prolist` endpoint (HTTP 410).
+### Prerequisites
 
-The scraper now uses a two-step approach:
-1. `GET https://www.google.com/maps/search/{query}` — extracts a canonical `pb=` URL from the Maps SPA page.
-2. `GET https://www.google.com/search?tbm=map&…&pb=…` — parses the `)]}'`-prefixed JSON at `data[64]`.
+- Python 3.10 or newer
+- pip package manager
 
-`requests-html` / pyppeteer removed; only `aiohttp` and `tqdm` needed for scraping.
+### Installation
 
----
+Clone the repository and install dependencies:
 
-## Troubleshooting
+```bash
+git clone https://github.com/devsanthoshmk/mapScraper-forked.git
+cd mapScraper-forked
+pip install -r requirements.txt
+```
 
-**Empty results / "Could not find pb= search URL"**
-Google may be serving a consent wall. Try matching `--lang` and `--country` to your locale.
+### Dependencies
 
-**"data[64] is missing"**
-Google may have changed the response structure again. Run with `--log-level DEBUG` and open an issue.
+The project uses the following key packages:
+- `aiohttp`: Asynchronous HTTP requests for crawling and website enrichment
+- `beautifulsoup4` and `lxml`: HTML parsing
+- `lxml_html_clean`: HTML sanitization
+- `pandas`: Data manipulation and CSV export
+- `phonenumbers`: Phone number parsing and validation
+- `tqdm`: Terminal progress bars
 
-**Enriched CSV has empty `web_*` columns**
-The domain may be unreachable. Check `web_scraped` column — `False` means the fetch failed silently (expected behaviour). Use `--web-timeout 20` for slow sites.
+## Usage
 
-## 🔄 Implementation Details
+### Original search CLI (mapScraperX.py)
 
-The scraper has been refactored to use the Google Places search URL instead of the local services listing, which is no longer available. 
+`mapScraperX.py` runs the Google Places scraper directly.
 
-### How it works:
+```bash
+# Scrape a single query
+python mapScraperX.py "restaurants in Miami" --limit 50
 
-Search results are fetched directly from Google's Places tab:
-`https://www.google.com/search?q={query}&start={pagination}&udm=1&hl={lang}&gl={country}`
+# Scrape with complete phone and address fallback
+python mapScraperX.py "dentists in Chicago" --mode complete
 
-- The `udm=1` parameter opens the places tab in Google results directly.
-- The returned data is backed into HTML and scraped using reliable class names, IDs, and other patterns.
-- For results without phone numbers, a separate asynchronous call is made to `https://www.google.com/async/lcl_akp?q={query}&async=ludocids:{cid},_fmt:prog` using the location's `cid` to fetch missing phone numbers, complete addresses, and website links.
-- Fully asynchronous execution for maximum performance and efficiency.
-- **Three scraping modes** for different use cases:
-  - `fast`: Quick results without phone fallback
-  - `standard`: Balanced with phone fallback (default)
-  - `complete`: Thorough results with phone and address fallback
+# Scrape multiple queries from a text file
+python mapScraperX.py --queries-file query_example.txt
 
-## 📝 License
+# Specify language, country, concurrency, and output path
+python mapScraperX.py --queries-file query_example.txt --lang en --country us --limit 25 --concurrent 5 --output-file data/results.csv
+```
 
----
+### Pipeline CLI (main.py)
+
+`main.py` provides three workflow modes: `scrape`, `enrich`, and `full`.
+
+```bash
+# Mode 1: Scrape only
+python main.py --mode scrape "marketing agencies in New York" --limit 50
+python main.py --mode scrape --queries-file query_example.txt
+
+# Mode 2: Enrich an existing CSV file
+python main.py --mode enrich --input data/output.csv
+
+# Mode 2: Enrich without website visits (offline and faster)
+python main.py --mode enrich --input data/output.csv --no-web-scraping
+
+# Mode 3: Full pipeline (scrape Google Maps and enrich results in one command)
+python main.py --mode full --queries-file query_example.txt --output-file data/leads.csv
+```
+
+## Scraping modes and fallback logic
+
+`mapScraperX.py` provides three modes to balance execution speed and data completeness:
+
+- `fast`: Collects data from the primary Google Places tab only. It skips the CID details endpoint. This mode is the fastest.
+- `standard`: Checks whether phone numbers exist in the primary results. If any result contains a phone number, it skips the fallback step. If no phone numbers exist, it queries the CID endpoint (`/async/lcl_akp`) to retrieve missing numbers. This is the default mode.
+- `complete`: Queries the CID detail endpoint for every business record that lacks a phone number, address, or website link. This mode retrieves the highest percentage of complete contact information.
+
+### The /places fallback mechanism
+
+Google Maps search listings frequently truncate addresses or omit contact numbers on the initial search page. To recover this data without browser rendering:
+1. The scraper identifies the Google customer ID (`cid`) from the place listing.
+2. An asynchronous HTTP request is sent to `https://www.google.com/async/lcl_akp?q={query}&async=ludocids:{cid},_fmt:prog`.
+3. The parser extracts the specific `Phone`, `Address`, and `Website` values from the returned partial DOM.
+
+## Configuration
+
+### Command-line arguments for main.py
+
+| Argument | Default | Description |
+|---|---|---|
+| `--mode` | `scrape` | Pipeline mode: `scrape`, `enrich`, or `full` |
+| `query` | None | Search query string (positional) |
+| `--queries-file FILE` | None | Path to plain text file with one query per line |
+| `--lang CODE` | `en` | Google Maps interface language code (`hl` parameter) |
+| `--country CODE` | `us` | Google Maps region code (`gl` parameter) |
+| `--limit N` | None | Maximum results per query |
+| `--output-file PATH` | `data/output.csv` | Destination path for raw CSV results |
+| `--concurrent N` | `3` | Maximum concurrent scraping workers |
+| `--input PATH` | None | Input CSV path for `enrich` mode |
+| `--no-web-scraping` | False | Skip external website requests during enrichment |
+| `--web-concurrent N` | `10` | Maximum concurrent website scraper workers |
+| `--web-batch-size N` | `100` | Number of URLs processed per batch |
+| `--web-timeout SEC` | `10` | Request timeout in seconds for website fetches |
+| `--log-level LEVEL` | `INFO` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+
+### Command-line arguments for mapScraperX.py
+
+| Argument | Default | Description |
+|---|---|---|
+| `query` | None | Search query string (positional) |
+| `--queries-file FILE` | None | Path to plain text file with one query per line |
+| `--lang CODE` | `en` | Language code |
+| `--country CODE` | `us` | Country code |
+| `--limit N` | `0` | Maximum results to collect (0 means no limit) |
+| `--output-file PATH` | `data/output.csv` | Destination path for CSV output |
+| `--concurrent N` | `3` | Maximum concurrent queries |
+| `--mode MODE` | `standard` | Scraping mode: `fast`, `standard`, or `complete` |
+
+### Common language and region codes
+
+The `--lang` argument accepts standard two-letter ISO 639-1 language codes (for example, `en`, `es`, `fr`, `de`, `it`, `pt`, `ja`, `zh`). The `--country` argument accepts ISO 3166-1 alpha-2 region codes (for example, `us`, `gb`, `ca`, `au`, `de`, `fr`, `es`, `in`, `br`).
+
+## Output formats
+
+### Raw scrape CSV (mapScraperX.py)
+
+| Column | Description |
+|---|---|
+| `id` | Google CID identifier |
+| `gmap_url` | Direct Google Maps CID URL |
+| `title` | Business name |
+| `category` | Business classification |
+| `address` | Street address |
+| `phoneNumber` | Primary phone number |
+| `additionalPhoneNumbers` | Pipe-delimited secondary phone numbers |
+| `website` | Business website URL |
+| `stars` | Average customer rating |
+| `reviews` | Total review count |
+
+### Raw scrape CSV (main.py)
+
+| Column | Description |
+|---|---|
+| `id` | Google Place ID (`ChIJ...`) |
+| `url_place` | Direct Google Maps place link |
+| `title` | Business name |
+| `category` | Business category |
+| `address` | Full address |
+| `phoneNumber` | Local telephone format |
+| `completePhoneNumber` | International telephone format |
+| `domain` | Cleaned website domain |
+| `url` | Full website URL |
+| `coor` | Latitude and longitude coordinate pair |
+| `stars` | Average star rating |
+| `reviews` | Total review count |
+| `source_query` | Query string that produced the record |
+
+### Enriched CSV schema
+
+When running `main.py` in `enrich` or `full` mode, the output includes all raw scrape columns plus the following data points:
+
+| Column | Type | Description |
+|---|---|---|
+| `has_phone` | bool | True if a local or international phone number is present |
+| `has_website` | bool | True if a domain or website URL is present |
+| `domain_valid` | bool | True if the domain passes regular expression syntax checks |
+| `rating_score` | float | Rating multiplied by the natural logarithm of reviews plus one |
+| `review_density` | float | Review count normalized against the maximum review count in the dataset |
+| `web_has_contact` | bool | True if contact keywords appear in homepage text |
+| `web_has_services` | bool | True if service or product keywords appear in homepage text |
+| `web_keywords` | str | Comma-separated list of top content keywords |
+| `web_is_modern` | bool | True if modern JavaScript frameworks (React, Vue, Next.js) are detected |
+| `web_scraped` | bool | True if the website HTTP request completed successfully |
+| `score` | float | Composite lead score from 0 to 100 |
+| `segment` | str | Classification bucket: `micro`, `small`, `medium`, or `large` |
+
+### Lead score calculation
+
+The lead score ranges from 0 to 100 based on four transparent factors:
+- Review volume (0 to 30 points): 30 points for 500 or more reviews, 24 for 200 to 499, 18 for 100 to 199, 12 for 50 to 99, 7 for 10 to 49, 3 for 1 to 9, 0 for 0 reviews.
+- Star rating (0 to 25 points): 25 points for rating 4.5 or higher, 20 for 4.0 to 4.4, 15 for 3.5 to 3.9, 10 for 3.0 to 3.4, 5 for ratings above 0.
+- Digital presence (0 to 30 points): 10 points for having a website, 5 for a valid domain syntax, 5 for contact signals, 5 for service signals, 5 for a modern frontend stack.
+- Reachability (0 to 15 points): 15 points if a phone number exists.
+
+Scores group into four tiers:
+- `micro`: 0 to 24 points
+- `small`: 25 to 49 points
+- `medium`: 50 to 74 points
+- `large`: 75 to 100 points
+
+## Differences from upstream
+
+This repository differs from the original `christivn/mapScraper` upstream project in several technical areas:
+
+1. Active Google endpoints: Upstream used `/localservices/prolist`, which Google permanently discontinued with HTTP 410. This repository implements two working pathways: Google Places search tab scraping (`udm=1`) and Google Maps SPA JSON extraction (`tbm=map`).
+2. Async CID contact fallback: Introduces `places_crawler.py` with asynchronous querying of Google's `/async/lcl_akp` endpoint to recover missing phone numbers, addresses, and website links for places records.
+3. Modular package structure: Isolates crawling logic inside the `mapScraper` package with clean imports and independent CLI tools (`mapScraperX.py` and `main.py`).
+4. Lead enrichment and scoring: Adds the `enrichment` and `pipeline` packages to engineer features, scrape website homepages for tech stack signals, and compute explainable 0 to 100 lead scores.
+5. Modern dependency requirements: Corrects `requirements.txt` to support Python 3.10 and newer, adding `lxml_html_clean` and updating version constraints for `aiohttp`, `pandas`, `phonenumbers`, and `beautifulsoup4`.
 
 ## License
 
-Provided as-is for educational and research purposes. Please respect Google's Terms of Service.
+This project is licensed under the MIT License. See the LICENSE file for details. This software is provided for research and educational purposes. Ensure compliance with Google Terms of Service when crawling public web pages.
